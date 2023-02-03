@@ -1,0 +1,62 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+    <AvaloniaResource Remove="Assets\Riot Games Assets\metadata.json" />
+    <AvaloniaResource Remove="Assets\Riot Games Assets\set1-en_us.json" />
+    <AvaloniaResource Remove="Assets\Riot Games Assets\set2-en_us.json" />
+    <AvaloniaResource Remove="Assets\Riot Games Assets\set3-en_us.json" />
+    <AvaloniaResource Remove="Assets\Riot Games Assets\set4-en_us.json" />
+    <AvaloniaResource Remove="Assets\Riot Games Assets\set5-en_us.json" />
+    <AvaloniaResource Remove="Assets\Riot Games Assets\set6-en_us.json" />
+    <None Remove=".gitignore" />
+    <None Remove="Assets\Decktracker.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <TrimmerRootDescriptor Include="Roots.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="0.10.18" />
+    <PackageReference Include="Avalonia.Desktop" Version="0.10.18" />
+    <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="0.10.18" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="0.10.18" />
+    <PackageReference Include="Deadpikle.AvaloniaProgressRing" Version="0.9.8" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+    <PackageReference Include="XamlNameReferenceGenerator" Version="1.5.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Assets\Riot Games Assets\en_us\data\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Assets\Riot Games Assets\set1-en_us.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Riot Games Assets\set2-en_us.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Riot Games Assets\set3-en_us.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Riot Games Assets\set4-en_us.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Riot Games Assets\set5-en_us.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Riot Games Assets\set6-en_us.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

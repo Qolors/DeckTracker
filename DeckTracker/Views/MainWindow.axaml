@@ -1,0 +1,12 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:progring="clr-namespace:AvaloniaProgressRing;assembly=AvaloniaProgressRing"
+        x:Class="DeckTracker.Views.MainWindow"
+        Icon="/Assets/avalonia-logo.ico"
+        Width="300" Height="800"
+        Title="DeckTracker"
+		TransparencyLevelHint="AcrylicBlur"
+		Background="Transparent"
+		ExtendClientAreaToDecorationsHint="True"
+        Content="{Binding Content}">
+</Window>

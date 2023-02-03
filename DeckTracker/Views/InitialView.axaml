@@ -1,0 +1,21 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:local="clr-namespace:AvaloniaProgressRing"
+			 xmlns:imaging="clr-namespace:Avalonia.Media.Imaging;assembly=Avalonia.Visuals"
+             xmlns:progRing="clr-namespace:AvaloniaProgressRing;assembly=AvaloniaProgressRing"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="300"
+             x:Class="DeckTracker.Views.InitialView"
+			 Background="Transparent"
+			 >
+	<Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+		<progRing:ProgressRing Width="80"
+							 Height="80"
+							 IsActive="True"
+							 HorizontalAlignment="Left"
+							 VerticalAlignment="Top"
+							 Foreground="Green"
+							 Margin="10,24,0,0"/>
+	</Grid>
+</UserControl>
