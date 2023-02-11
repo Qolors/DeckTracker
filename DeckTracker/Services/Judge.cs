@@ -13,10 +13,13 @@ namespace DeckTracker.Services
     {
         private OpponentDeck opponentDeck;
         private DeckManager deckManager;
-        private MetaDecks metaDecks;
+        private static MetaDecks metaDecks;
         private CardDataBase cardDataBase;
         private List<string> TheCurrentCards;
+        private Dictionary<string, int> CurrentRegions;
         public bool IsChanged;
+        public string? FirstRegion { get; set; } = null;
+        public string? SecondRegion { get; set; } = null;
         public List<TodoItem> CurrentGuess { get; private set; }
         public Judge()
         {
@@ -26,49 +29,94 @@ namespace DeckTracker.Services
             TheCardDataBase = Task.Run(() => LoadCards()).Result;
             CurrentGuess= new List<TodoItem>();
             TheCurrentCards = new List<string>();
+            CurrentRegions = new Dictionary<string, int>();
         }
 
         private static async Task<CardDataBase> LoadCards()
         {
-            Console.WriteLine("Loading Cards");
+            await MetaDecks.LoadDecks();
             var theCards = await CardDataBase.LoadAllCards();
             return theCards;
         }
         public void GetMetaDecks()
         {
-            foreach (var code in MetaDecks.DeckCodes)
+            foreach (var codes in MetaDecks.DeckCodes)
             {
+
                 Deck deck = new Deck();
-                var cards = DeckManager.GetDeckFromCode(code);
-                Console.WriteLine("A Deck");
+                var cards = DeckManager.GetDeckFromCode(codes);
+
                 foreach (var card in cards)
                 {
                     deck.Cards.Add(card.CardCode);
+                    var regions = TheCardDataBase.Cards.Where(c => c.cardCode == card.CardCode).Select(c => c.regions).FirstOrDefault();
+                    if (regions != null)
+                    {
+                        foreach (var region in regions)
+                        {
+                            deck.Regions.Add(region);
+                        }
+                    }  
                 }
+
                 MetaDecks.Decks.Add(deck);
             }
         }
 
-        public void CheckForNew(IEnumerable<string> codes)
+        private void UpdateRegions()
+        {
+            var sortedDict = from entry in CurrentRegions orderby entry.Value descending select entry.Key;
+            FirstRegion = sortedDict.ElementAt(0);
+            if (CurrentRegions.Count > 1)
+            {
+                SecondRegion = sortedDict.ElementAt(1);
+            }
+        }
+        public bool CheckForNew(IEnumerable<string> codes)
         {
             if (codes.Count() != 0)
             {
+                
                 for (int i = 0; i < codes.Count(); i++)
                 {
-                    OpponentDeck.FoundACard(codes.ElementAt(i));
+                    if (OpponentDeck.FoundACard(codes.ElementAt(i)))
+                    {
+                        var regions = TheCardDataBase.Cards.Where(c => c.cardCode == codes.ElementAt(i)).Select(c => c.regions).First();
+                        foreach(var region in regions)
+                        {
+                            if (!CurrentRegions.ContainsKey(region))
+                            {
+                                CurrentRegions.Add(region, 1);
+                            }
+                            else
+                            {
+                                CurrentRegions[region]++;
+                            }
+                        }
+                    }
                 }
-                GuessADeck();
+
+                if (CurrentRegions.Count > 0)
+                {
+                    UpdateRegions();
+                }
+
+                return GuessADeck();
+
+                
             }
+            return false;
         }
 
-        private void GuessADeck()
+        private bool GuessADeck()
         {
             if (OpponentDeck.DeckList.Count < 2) 
             {
-                //CurrentGuess = new List<TodoItem>(){ new TodoItem { Description = "Need more cards.." } }; 
-                return; 
+                return false; 
             }
+
             Dictionary<HashSet<string>, int> dic = new Dictionary<HashSet<string>, int>();
+
             foreach (var deck in MetaDecks.Decks)
             {
                 int matches = 0;
@@ -79,29 +127,63 @@ namespace DeckTracker.Services
                         matches += 1;
                     }
                 }
-                Console.WriteLine("Matched: " + matches);
-                if (matches > 1)
+                
+                if (matches > 0)
                 {
-                    dic.Add(deck.Cards, matches);
+                    Console.WriteLine("Matched: " + matches);
+                    if (FirstRegion != null)
+                    {
+                        Console.WriteLine(FirstRegion);
+                        if (!deck.Regions.Any(r => r == FirstRegion))
+                        {
+                            if (SecondRegion == null)
+                            {
+                                return false;
+                            }
+                            else
+                            { 
+                                Console.WriteLine(SecondRegion);
+                                if (!deck.Regions.Any(r => r == SecondRegion))
+                                {
+                                    return false;
+                                }
+                            }
+                            
+                        }
+                        dic.Add(deck.Cards, matches);
+
+                        
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                    
                 }
             }
+
             if (dic.Count > 0)
             {
                 
                 var bestMatch = dic.OrderByDescending(deck => deck.Value).FirstOrDefault();
+
                 var matchedDeck = bestMatch.Key.ToList();
-                
 
                 if (matchedDeck != null)
                 {
-                    IEnumerable<string> inCurrentCards = TheCurrentCards.Except(matchedDeck);
-                    IEnumerable<string> inMatchedDeck = matchedDeck.Except(inCurrentCards);
 
-                    IsChanged = (inCurrentCards.Any() && inMatchedDeck.Any());
+                    IEnumerable<string> inMatchedDeck = matchedDeck.Except(TheCurrentCards);
+
+                    IsChanged = (inMatchedDeck.Any());
+
                     Console.WriteLine(IsChanged);
-                    if (!IsChanged) { return; }
+
+                    if (!IsChanged) { return false; }
+
                     TheCurrentCards = matchedDeck;
+
                     List<TodoItem> todoItems = new List<TodoItem>();
+
                     foreach (var card in matchedDeck)
                     {
                         foreach (var c in TheCardDataBase.Cards)
@@ -113,14 +195,17 @@ namespace DeckTracker.Services
                                     Description = c.name,
                                     Set = c.set.ToLower(),
                                     Url = $"https://dd.b.pvp.net/latest/{c.set.ToLower()}/en_us/img/cards/{c.cardCode}.png"
-
                                 });
                             }
                         }
                     }
+
                     CurrentGuess = todoItems;
+
+                    return true;
                 }
             }
+            return false;
         }
 
         public OpponentDeck OpponentDeck
@@ -140,7 +225,7 @@ namespace DeckTracker.Services
             set => deckManager = value;
         }
 
-        public MetaDecks MetaDecks
+        public static MetaDecks MetaDecks
         {
             get => metaDecks;
             set => metaDecks = value;

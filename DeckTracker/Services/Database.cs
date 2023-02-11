@@ -11,7 +11,6 @@ namespace DeckTracker.Services
 {
     public class Database
     {
-        private static HttpClient client { get; set; }
 
         Root boardState;
         public bool CardSeen = false;
@@ -28,9 +27,8 @@ namespace DeckTracker.Services
             this.BoardState = BoardState;
         }
 
-        async public static Task<Database> PingClientAsync()
+        async public static Task<Database> PingClientAsync(HttpClient client)
         {
-            client = new HttpClient();
             var response = await client.GetAsync(URL).ConfigureAwait(false);
             var stringResponse = await response.Content.ReadAsStringAsync();
 
@@ -40,7 +38,7 @@ namespace DeckTracker.Services
         public IEnumerable<string> GetItems()
         {
             List<string> items = new List<string>();
-            IEnumerable<string> cards = Enumerable.Empty<string>();
+            IEnumerable<string> cards;
 
             foreach(Rectangle rec in BoardState.Rectangles)
             {
@@ -54,6 +52,7 @@ namespace DeckTracker.Services
                     items.Add(rec.CardCode);
                 }
             }
+
             cards = items.ToArray();
             return cards;
         }

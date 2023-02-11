@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
+    <AvaloniaResource Remove="Assets\codes.txt" />
     <AvaloniaResource Remove="Assets\Riot Games Assets\metadata.json" />
     <AvaloniaResource Remove="Assets\Riot Games Assets\set1-en_us.json" />
     <AvaloniaResource Remove="Assets\Riot Games Assets\set2-en_us.json" />
@@ -40,6 +41,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Assets\codes.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Assets\Riot Games Assets\set1-en_us.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

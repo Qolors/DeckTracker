@@ -4,6 +4,7 @@ using DeckTracker.Views;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
 using System.Timers;
@@ -17,9 +18,9 @@ namespace DeckTracker.ViewModels
         InitialViewModel loadingView;
         ReadyViewModel readyViewModel;
         Database dataBase;
+        HttpClient client;
         CardDataBase cardDataBase;
-
-        private Judge Judge;
+        Judge judge;
 
         const string WAITING = "Waiting for game to start.";
         const string OBSERVING = "Observing Opponent Cards..";
@@ -28,6 +29,7 @@ namespace DeckTracker.ViewModels
         public MainWindowViewModel()
         {
             Content = LoadingView = new InitialViewModel();
+            Client = new HttpClient();
             Task.Run(() => LoadDataBases()).ConfigureAwait(false);
             this.SetTimer();
         }
@@ -39,7 +41,7 @@ namespace DeckTracker.ViewModels
         }
         private void SetTimer()
         {
-            pingTimer = new Timer(2000);
+            pingTimer = new Timer(4000);
             pingTimer.Elapsed += async (sender, e) => await PingForUpdates();
             pingTimer.AutoReset = true;
             pingTimer.Enabled = true;
@@ -49,19 +51,25 @@ namespace DeckTracker.ViewModels
         {
             try
             {
-                TheDataBase = Task.Run(() => Database.PingClientAsync()).Result;
-                if (TheDataBase != null)
+                TheDataBase = Task.Run(() => Database.PingClientAsync(Client)).Result;
+                if (TheDataBase != null && Judge != null)
                 {
-                    Judge.CheckForNew(TheDataBase.GetItems());
+                    bool doUpdate = Judge.CheckForNew(TheDataBase.GetItems());
 
                     if (TheDataBase.CardSeen)
                     {
-                        Content = List = new TodoListViewModel(Judge.CurrentGuess);
+
+                        Content = List = doUpdate ? new TodoListViewModel(Judge.CurrentGuess) : List;
+                        
                     }
                     else
                     {
                         Content = TheDataBase.BoardState.GameState != "InProgress" ?
-                            Connected = new ReadyViewModel(WAITING) : Connected = new ReadyViewModel(OBSERVING);
+
+                            Connected = new ReadyViewModel(WAITING) 
+                            : 
+                            Connected = new ReadyViewModel(OBSERVING);
+
                         Judge.OpponentDeck.DeckList.Clear();
                     }
                         
@@ -95,6 +103,12 @@ namespace DeckTracker.ViewModels
             private set => this.RaiseAndSetIfChanged(ref todoListViewModel, value);
         }
 
+        public HttpClient Client
+        {
+            get => client;
+            set => client = value;
+        }
+
         public InitialViewModel LoadingView
         {
             get => loadingView;
@@ -105,6 +119,12 @@ namespace DeckTracker.ViewModels
         {
             get => readyViewModel;
             private set => this.RaiseAndSetIfChanged(ref readyViewModel, value);
+        }
+
+        public Judge Judge
+        {
+            get => judge;
+            set => judge = value;
         }
 
         public void AddItem()
